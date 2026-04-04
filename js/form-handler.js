@@ -1,4 +1,4 @@
-const GOOGLE_SCRIPT_URL = "PASTE_YOUR_DEPLOYED_GOOGLE_APPS_SCRIPT_URL_HERE";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQ9cqSHM6edDl_2CyFsmhv1xGOS53O_5vgj8Gi7rtUfHXb_udIiJPsIEn-65iKkIQ/exec";
 
 document.addEventListener("DOMContentLoaded", () => {
   attachNewsletterFormHandler();
@@ -48,7 +48,7 @@ function attachNewsletterFormHandler() {
         successDiv.style.display = "block";
       }
     } catch (error) {
-      showError(errorDiv, "Network error. Please try again later.");
+      showError(errorDiv, getSubmissionErrorMessage(error));
     }
   });
 }
@@ -124,7 +124,7 @@ function attachContactFormHandler() {
         successDiv.style.display = "block";
       }
     } catch (error) {
-      showError(errorDiv, "Network error. Please try again later.");
+      showError(errorDiv, getSubmissionErrorMessage(error));
     }
   });
 }
@@ -138,6 +138,14 @@ function postFormPayload(payload) {
     method: "POST",
     body: JSON.stringify(payload)
   });
+}
+
+function getSubmissionErrorMessage(error) {
+  if (error && error.message === "Google Apps Script URL is not configured.") {
+    return "Google Apps Script URL is not configured yet.";
+  }
+
+  return "Network error. Please try again later.";
 }
 
 function showError(errorElement, message) {

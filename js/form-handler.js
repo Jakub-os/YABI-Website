@@ -12,10 +12,9 @@ function attachNewsletterFormHandler() {
 
   const emailInput = newsletterForm.querySelector('input[name="email"]');
   const formContainer = newsletterForm.closest(".w-form");
-  const successDiv = formContainer ? formContainer.querySelector(".w-form-done") : null;
   const errorDiv = formContainer ? formContainer.querySelector(".w-form-fail") : null;
 
-  newsletterForm.addEventListener("submit", async (event) => {
+  newsletterForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
     const email = (emailInput ? emailInput.value : "").trim();
@@ -27,26 +26,7 @@ function attachNewsletterFormHandler() {
       return;
     }
 
-    try {
-      const response = await fetch("/api/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
-
-      if (!response.ok) {
-        const data = await safeJson(response);
-        showError(errorDiv, data.error || "Submission failed.");
-        return;
-      }
-
-      newsletterForm.style.display = "none";
-      if (successDiv) {
-        successDiv.style.display = "block";
-      }
-    } catch (error) {
-      showError(errorDiv, "Network error. Please try again later.");
-    }
+    showError(errorDiv, "Form submissions are currently disabled.");
   });
 }
 
@@ -61,20 +41,17 @@ function attachContactFormHandler() {
   const emailInput = contactForm.querySelector('input[name="email"]');
   const messageInput = contactForm.querySelector('textarea[name="field"]');
   const privacyCheckbox = contactForm.querySelector('input[name="consent-contact-response"]');
-  const marketingCheckbox = contactForm.querySelector('input[name="consent-contact-newsletter"]');
 
   const formContainer = contactForm.closest(".w-form");
-  const successDiv = formContainer ? formContainer.querySelector(".w-form-done") : null;
   const errorDiv = formContainer ? formContainer.querySelector(".w-form-fail") : null;
 
-  contactForm.addEventListener("submit", async (event) => {
+  contactForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
     const name = (nameInput ? nameInput.value : "").trim();
     const email = (emailInput ? emailInput.value : "").trim();
     const message = (messageInput ? messageInput.value : "").trim();
-    const consentPrivacy = Boolean(privacyCheckbox && privacyCheckbox.checked);
-    const consentMarketing = Boolean(marketingCheckbox && marketingCheckbox.checked);
+    const consent_privacy = Boolean(privacyCheckbox && privacyCheckbox.checked);
 
     clearMessage(errorDiv);
 
@@ -93,37 +70,12 @@ function attachContactFormHandler() {
       return;
     }
 
-    if (!consentPrivacy) {
+    if (!consent_privacy) {
       showError(errorDiv, "You must accept the privacy consent.");
       return;
     }
 
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          message,
-          consentPrivacy,
-          consentMarketing
-        })
-      });
-
-      if (!response.ok) {
-        const data = await safeJson(response);
-        showError(errorDiv, data.error || "Submission failed.");
-        return;
-      }
-
-      contactForm.style.display = "none";
-      if (successDiv) {
-        successDiv.style.display = "block";
-      }
-    } catch (error) {
-      showError(errorDiv, "Network error. Please try again later.");
-    }
+    showError(errorDiv, "Form submissions are currently disabled.");
   });
 }
 
@@ -132,7 +84,14 @@ function showError(errorElement, message) {
     return;
   }
 
-  errorElement.textContent = message;
+  const messageNode = errorElement.querySelector("div");
+
+  if (messageNode) {
+    messageNode.textContent = message;
+  } else {
+    errorElement.textContent = message;
+  }
+
   errorElement.style.display = "block";
 }
 
@@ -142,14 +101,6 @@ function clearMessage(errorElement) {
   }
 
   errorElement.style.display = "none";
-}
-
-async function safeJson(response) {
-  try {
-    return await response.json();
-  } catch (error) {
-    return {};
-  }
 }
 
 function isValidEmail(email) {

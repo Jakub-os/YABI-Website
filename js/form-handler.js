@@ -130,7 +130,7 @@ function attachContactFormHandler() {
 }
 
 function postFormPayload(payload) {
-  if (!GOOGLE_SCRIPT_URL) {
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "PASTE_YOUR_DEPLOYED_GOOGLE_APPS_SCRIPT_URL_HERE") {
     return Promise.reject(new Error("Google Apps Script URL is not configured."));
   }
 
@@ -139,7 +139,6 @@ function postFormPayload(payload) {
     body: JSON.stringify(payload)
   });
 }
-
 
 function getSubmissionErrorMessage(error) {
   if (error && error.message === "Google Apps Script URL is not configured.") {

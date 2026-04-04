@@ -330,7 +330,27 @@ async function serveStaticFile(requestPath, res) {
   }
 
   const extension = path.extname(filePath).toLowerCase();
-  const contentType = MIME_TYPES[extension] || "application/octet-stream";
+  const contentType = MIME_TYPES[extension] | || "application/octet-stream";
+      // Inject form-handler script into HTML files
+  if (extension === ".html") {
+    try 
+      const data = await fsp.readFile(filePath, "utf8");
+      const scriptTag = '<script src="/js/form-handler.js"></script>';
+      let modified = data;
+      if (!data.includes(scriptTag)) {
+        modified = data.replace('</body>', `${scriptTag}</body>`);
+      }
+      res.writeHead(200, {
+        "Content-Type": contentType,
+        "Content-Length": Buffer.byteLength(modified)
+      });
+      res.end(modified);
+      return;
+    } catch (err) {
+      console.error("Error injecting form handler", err);
+    }
+  }
+
 
   res.writeHead(200, {
     "Content-Type": contentType,

@@ -1,4 +1,4 @@
-const GOOGLE_SCRIPT_URL = "PASTE_DEPLOYED_APPS_SCRIPT_URL_HERE";
+const GOOGLE_SCRIPT_URL = "PASTE_YOUR_DEPLOYED_GOOGLE_APPS_SCRIPT_URL_HERE";
 
 document.addEventListener("DOMContentLoaded", () => {
   attachNewsletterFormHandler();
@@ -34,7 +34,7 @@ function attachNewsletterFormHandler() {
         form: "newsletter",
         email,
         form_source: "newsletter",
-        pageUrl: window.location.href
+        page_url: window.location.href
       });
 
       if (!response.ok) {
@@ -110,7 +110,7 @@ function attachContactFormHandler() {
         consent_privacy,
         consent_marketing,
         form_source: "contact",
-        pageUrl: window.location.href
+        page_url: window.location.href
       });
 
       if (!response.ok) {
@@ -130,13 +130,12 @@ function attachContactFormHandler() {
 }
 
 function postFormPayload(payload) {
-  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "PASTE_DEPLOYED_APPS_SCRIPT_URL_HERE") {
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "PASTE_YOUR_DEPLOYED_GOOGLE_APPS_SCRIPT_URL_HERE") {
     return Promise.reject(new Error("Google Apps Script URL is not configured."));
   }
 
   return fetch(GOOGLE_SCRIPT_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 }

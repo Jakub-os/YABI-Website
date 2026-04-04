@@ -1,6 +1,9 @@
 /**
  * Google Apps Script endpoint for website forms.
- * Deploy as Web app with access: Anyone.
+ *
+ * Deploy as Web App:
+ * - Execute as: Me
+ * - Who has access: Anyone
  */
 
 const SPREADSHEET_ID = '1_qFFdFn739SxrHWD_S4nsUMIAhVzhzTkd819uX-k99Y';
@@ -8,62 +11,47 @@ const NEWSLETTER_SHEET = 'Newsletter';
 const CONTACT_SHEET = 'Contact';
 
 function doPost(e) {
-  return handleRequest_(e);
-}
-
-function doOptions() {
-  return createJsonResponse_(200, { ok: true });
-}
-
-function handleRequest_(e) {
   try {
     const payload = parseJsonBody_(e);
-    const formType = String(payload.form || '').trim().toLowerCase();
+    const formType = normalizeText_(payload.form).toLowerCase();
 
     if (formType === 'newsletter') {
-      const result = validateNewsletterPayload_(payload);
-      if (!result.ok) {
-        return createJsonResponse_(400, { ok: false, error: result.error });
-      }
-
-      appendNewsletterRow_(result.value);
-      return createJsonResponse_(200, { ok: true });
+      const newsletter = validateNewsletterPayload_(payload);
+      appendNewsletterRow_(newsletter);
+      return jsonResponse_({ ok: true });
     }
 
     if (formType === 'contact') {
-      const result = validateContactPayload_(payload);
-      if (!result.ok) {
-        return createJsonResponse_(400, { ok: false, error: result.error });
-      }
-
-      appendContactRow_(result.value);
-      return createJsonResponse_(200, { ok: true });
+      const contact = validateContactPayload_(payload);
+      appendContactRow_(contact);
+      return jsonResponse_({ ok: true });
     }
 
-    return createJsonResponse_(400, { ok: false, error: 'Invalid form type.' });
+    return jsonResponse_({ ok: false, error: 'Invalid form type.' });
   } catch (error) {
-    return createJsonResponse_(500, {
+    return jsonResponse_({
       ok: false,
       error: error && error.message ? error.message : 'Unexpected server error.'
     });
   }
 }
 
+function doGet() {
+  return jsonResponse_({ ok: true, message: 'Google Apps Script form endpoint is running.' });
+}
+
 function validateNewsletterPayload_(payload) {
   const email = normalizeText_(payload.email).toLowerCase();
 
   if (!isValidEmail_(email)) {
-    return { ok: false, error: 'A valid email is required.' };
+    throw new Error('A valid email is required.');
   }
 
   return {
-    ok: true,
-    value: {
-      submitted_at: new Date().toISOString(),
-      email: email,
-      form_source: normalizeText_(payload.form_source) || 'newsletter',
-      page_url: normalizeText_(payload.pageUrl)
-    }
+    submitted_at: new Date().toISOString(),
+    email: email,
+    form_source: normalizeText_(payload.form_source) || 'newsletter',
+    page_url: normalizeText_(payload.page_url)
   };
 }
 
@@ -71,37 +59,34 @@ function validateContactPayload_(payload) {
   const name = normalizeText_(payload.name);
   const email = normalizeText_(payload.email).toLowerCase();
   const message = normalizeText_(payload.message);
-  const consentPrivacy = payload.consent_privacy === true;
-  const consentMarketing = payload.consent_marketing === true;
+  const consent_privacy = payload.consent_privacy === true;
+  const consent_marketing = payload.consent_marketing === true;
 
   if (!name) {
-    return { ok: false, error: 'Name is required.' };
+    throw new Error('Name is required.');
   }
 
   if (!isValidEmail_(email)) {
-    return { ok: false, error: 'A valid email is required.' };
+    throw new Error('A valid email is required.');
   }
 
   if (!message) {
-    return { ok: false, error: 'Message is required.' };
+    throw new Error('Message is required.');
   }
 
-  if (!consentPrivacy) {
-    return { ok: false, error: 'Privacy consent is required.' };
+  if (!consent_privacy) {
+    throw new Error('Privacy consent is required.');
   }
 
   return {
-    ok: true,
-    value: {
-      submitted_at: new Date().toISOString(),
-      name: name,
-      email: email,
-      message: message,
-      consent_privacy: consentPrivacy,
-      consent_marketing: consentMarketing,
-      form_source: normalizeText_(payload.form_source) || 'contact',
-      page_url: normalizeText_(payload.pageUrl)
-    }
+    submitted_at: new Date().toISOString(),
+    name: name,
+    email: email,
+    message: message,
+    consent_privacy: consent_privacy,
+    consent_marketing: consent_marketing,
+    form_source: normalizeText_(payload.form_source) || 'contact',
+    page_url: normalizeText_(payload.page_url)
   };
 }
 
@@ -152,14 +137,10 @@ function parseJsonBody_(e) {
   }
 }
 
-function createJsonResponse_(status, body) {
-  const output = ContentService
-    .createTextOutput(JSON.stringify({ status: status, ...body }))
+function jsonResponse_(body) {
+  return ContentService
+    .createTextOutput(JSON.stringify(body))
     .setMimeType(ContentService.MimeType.JSON);
-
-  // Apps Script Web Apps do not allow custom response headers on ContentService.
-  // Returning JSON is sufficient for browser fetch to consume the response body.
-  return output;
 }
 
 function normalizeText_(value) {

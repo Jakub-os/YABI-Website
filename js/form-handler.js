@@ -1,4 +1,4 @@
-const GOOGLE_SCRIPT_URL = "PASTE_DEPLOYED_APPS_SCRIPT_URL_HERE";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQ9cqSHM6edDl_2CyFsmhv1xGOS53O_5vgj8Gi7rtUfHXb_udIiJPsIEn-65iKkIQ/exec";
 
 document.addEventListener("DOMContentLoaded", () => {
   attachNewsletterFormHandler();
@@ -34,7 +34,7 @@ function attachNewsletterFormHandler() {
         form: "newsletter",
         email,
         form_source: "newsletter",
-        pageUrl: window.location.href
+        page_url: window.location.href
       });
 
       if (!response.ok) {
@@ -48,7 +48,7 @@ function attachNewsletterFormHandler() {
         successDiv.style.display = "block";
       }
     } catch (error) {
-      showError(errorDiv, "Network error. Please try again later.");
+      showError(errorDiv, getSubmissionErrorMessage(error));
     }
   });
 }
@@ -110,7 +110,7 @@ function attachContactFormHandler() {
         consent_privacy,
         consent_marketing,
         form_source: "contact",
-        pageUrl: window.location.href
+        page_url: window.location.href
       });
 
       if (!response.ok) {
@@ -124,21 +124,29 @@ function attachContactFormHandler() {
         successDiv.style.display = "block";
       }
     } catch (error) {
-      showError(errorDiv, "Network error. Please try again later.");
+      showError(errorDiv, getSubmissionErrorMessage(error));
     }
   });
 }
 
 function postFormPayload(payload) {
-  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === "PASTE_DEPLOYED_APPS_SCRIPT_URL_HERE") {
+  if (!GOOGLE_SCRIPT_URL) {
     return Promise.reject(new Error("Google Apps Script URL is not configured."));
   }
 
   return fetch(GOOGLE_SCRIPT_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+}
+
+
+function getSubmissionErrorMessage(error) {
+  if (error && error.message === "Google Apps Script URL is not configured.") {
+    return "Google Apps Script URL is not configured yet.";
+  }
+
+  return "Network error. Please try again later.";
 }
 
 function showError(errorElement, message) {
